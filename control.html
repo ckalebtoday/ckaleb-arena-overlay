@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arena Code Control</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700;900&display=swap');
+
+    body {
+      background: #05051e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Exo 2', sans-serif;
+      gap: 20px;
+    }
+
+    h1 {
+      color: #a855f7;
+      font-size: 22px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px #a855f7;
+    }
+
+    .row { display: flex; gap: 10px; align-items: center; }
+
+    input {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid #a855f7;
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 18px;
+      padding: 10px 16px;
+      outline: none;
+      width: 180px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    input::placeholder { color: rgba(255,255,255,0.3); }
+
+    button {
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 10px 20px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #clearBtn { background: rgba(255, 80, 120, 0.8); }
+
+    #status { color: rgba(255,255,255,0.5); font-size: 13px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <h1>C.Kaleb Arena Control</h1>
+  <div class="row">
+    <input type="text" id="codeInput" placeholder="Enter Code" maxlength="10" />
+    <button onclick="setCode()">Set</button>
+    <button id="clearBtn" onclick="clearCode()">Clear</button>
+  </div>
+  <p id="status">Loading...</p>
+
+  <script>
+    const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
+    const API_KEY = '$2a$10$TWKGFi8gk9KQmP5he6cfNuxZR1hlQghxikWHUBKAkKw1RIMY5YR9.';
+
+    function updateBin(code) {
+      return fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
+        },
+        body: JSON.stringify({ code })
+      });
+    }
+
+    function setCode() {
+      const val = document.getElementById('codeInput').value.trim().toUpperCase();
+      if (!val) return;
+      updateBin(val).then(() => {
+        document.getElementById('status').textContent = 'Active: ' + val;
+      });
+    }
+
+    function clearCode() {
+      updateBin('').then(() => {
+        document.getElementById('codeInput').value = '';
+        document.getElementById('status').textContent = 'No code active';
+      });
+    }
+
+    document.getElementById('codeInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') setCode();
+    });
+
+    fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    })
+    .then(r => r.json())
+    .then(data => {
+      const code = data.record.code;
+      document.getElementById('status').textContent = code ? 'Active: ' + code : 'No code active';
+    });
+  </script>
+</body>
+</html>

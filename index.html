@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Arena Code Overlay</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700;900&display=swap');
@@ -35,10 +34,7 @@
       transition: opacity 0.4s ease;
     }
 
-    #overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
 
     .label {
       font-size: 18px;
@@ -46,9 +42,7 @@
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #a855f7;
-      text-shadow:
-        0 0 8px #a855f7,
-        0 0 20px #7c3aed;
+      text-shadow: 0 0 8px #a855f7, 0 0 20px #7c3aed;
     }
 
     .code {
@@ -62,93 +56,39 @@
         0 0 28px #a855f7,
         -2px 0 0 #06b6d4;
     }
-
-    /* Admin panel — hidden from stream view */
-    #admin {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(10, 10, 40, 0.9);
-      border: 1px solid #a855f7;
-      border-radius: 8px;
-      padding: 14px 18px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      z-index: 999;
-    }
-
-    #admin input {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid #a855f7;
-      border-radius: 6px;
-      color: #fff;
-      font-family: 'Exo 2', sans-serif;
-      font-size: 14px;
-      padding: 6px 12px;
-      outline: none;
-      width: 140px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    #admin input::placeholder { color: rgba(255,255,255,0.3); }
-
-    #admin button {
-      background: linear-gradient(135deg, #7c3aed, #06b6d4);
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-family: 'Exo 2', sans-serif;
-      font-weight: 700;
-      font-size: 13px;
-      padding: 7px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: opacity 0.2s;
-    }
-
-    #admin button:hover { opacity: 0.8; }
-
-    #clearBtn {
-      background: rgba(255, 80, 120, 0.7) !important;
-    }
   </style>
 </head>
 <body>
-
-  <!-- Stream Overlay -->
   <div id="overlay" class="hidden">
     <span class="label">Arena Code</span>
     <span class="code" id="displayCode"></span>
   </div>
 
-  <!-- Admin Control Panel (crop this out in OBS or hide via URL param) -->
-  <div id="admin">
-    <input type="text" id="codeInput" placeholder="Enter Code" maxlength="10" />
-    <button onclick="setCode()">Set</button>
-    <button id="clearBtn" onclick="clearCode()">Clear</button>
-  </div>
-
   <script>
-    function setCode() {
-      const val = document.getElementById('codeInput').value.trim().toUpperCase();
-      if (!val) return;
-      document.getElementById('displayCode').textContent = val;
-      document.getElementById('overlay').classList.remove('hidden');
+    const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
+    const API_KEY = '$2a$10$TWKGFi8gk9KQmP5he6cfNuxZR1hlQghxikWHUBKAkKw1RIMY5YR9.';
+
+    function fetchCode() {
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': API_KEY }
+      })
+      .then(r => r.json())
+      .then(data => {
+        const code = data.record.code;
+        const overlay = document.getElementById('overlay');
+        const el = document.getElementById('displayCode');
+        if (code) {
+          el.textContent = code;
+          overlay.classList.remove('hidden');
+        } else {
+          el.textContent = '';
+          overlay.classList.add('hidden');
+        }
+      });
     }
 
-    function clearCode() {
-      document.getElementById('displayCode').textContent = '';
-      document.getElementById('overlay').classList.add('hidden');
-      document.getElementById('codeInput').value = '';
-    }
-
-    document.getElementById('codeInput').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') setCode();
-    });
+    fetchCode();
+    setInterval(fetchCode, 2000);
   </script>
-
 </body>
 </html>
