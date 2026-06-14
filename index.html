@@ -5,9 +5,7 @@
   <title>Arena Code Overlay</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700;900&display=swap');
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       background: transparent;
       display: flex;
@@ -17,7 +15,6 @@
       padding: 20px;
       font-family: 'Exo 2', sans-serif;
     }
-
     #overlay {
       display: inline-flex;
       align-items: center;
@@ -33,9 +30,7 @@
         inset 0 0 10px rgba(160, 80, 255, 0.08);
       transition: opacity 0.4s ease;
     }
-
     #overlay.hidden { opacity: 0; pointer-events: none; }
-
     .label {
       font-size: 18px;
       font-weight: 700;
@@ -44,7 +39,6 @@
       color: #a855f7;
       text-shadow: 0 0 8px #a855f7, 0 0 20px #7c3aed;
     }
-
     .code {
       font-size: 26px;
       font-weight: 900;
@@ -63,18 +57,19 @@
     <span class="label">Arena Code</span>
     <span class="code" id="displayCode"></span>
   </div>
-
   <script>
     const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
-    const API_KEY = '$2a$10$TWKGFi8gk9KQmP5he6cfNuxZR1hlQghxikWHUBKAkKw1RIMY5YR9.';
+    const params = new URLSearchParams(window.location.search);
+    const API_KEY = params.get('key');
 
     function fetchCode() {
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      if (!API_KEY) return;
+      fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
         headers: { 'X-Master-Key': API_KEY }
       })
       .then(r => r.json())
       .then(data => {
-        const code = data.record.code;
+        const code = data.record ? data.record.code : '';
         const overlay = document.getElementById('overlay');
         const el = document.getElementById('displayCode');
         if (code) {
@@ -84,7 +79,8 @@
           el.textContent = '';
           overlay.classList.add('hidden');
         }
-      });
+      })
+      .catch(() => {});
     }
 
     fetchCode();
