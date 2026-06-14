@@ -61,6 +61,7 @@
     #clearBtn { background: rgba(255, 80, 120, 0.8); }
 
     #status { color: rgba(255,255,255,0.5); font-size: 13px; letter-spacing: 1px; }
+    #error { color: #ff5078; font-size: 12px; letter-spacing: 1px; max-width: 400px; text-align: center; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -71,48 +72,75 @@
     <button id="clearBtn" onclick="clearCode()">Clear</button>
   </div>
   <p id="status">Loading...</p>
+  <p id="error"></p>
 
   <script>
     const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
     const API_KEY = '$2a$10$TWKGFi8gk9KQmP5he6cfNuxZR1hlQghxikWHUBKAkKw1RIMY5YR9.';
+    const BASE = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+    function setStatus(msg) {
+      document.getElementById('status').textContent = msg;
+    }
+
+    function setError(msg) {
+      document.getElementById('error').textContent = msg;
+    }
 
     function updateBin(code) {
-      return fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      return fetch(BASE, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Master-Key': API_KEY
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code: code })
+      }).then(r => {
+        if (!r.ok) return r.text().then(t => { throw new Error('JSONBin error: ' + t); });
+        return r.json();
       });
     }
 
     function setCode() {
       const val = document.getElementById('codeInput').value.trim().toUpperCase();
       if (!val) return;
-      updateBin(val).then(() => {
-        document.getElementById('status').textContent = 'Active: ' + val;
-      });
+      setStatus('Saving...');
+      setError('');
+      updateBin(val)
+        .then(() => setStatus('Active: ' + val))
+        .catch(e => { setStatus('Failed to save'); setError(e.message); });
     }
 
     function clearCode() {
-      updateBin('').then(() => {
-        document.getElementById('codeInput').value = '';
-        document.getElementById('status').textContent = 'No code active';
-      });
+      setStatus('Clearing...');
+      setError('');
+      updateBin('')
+        .then(() => {
+          document.getElementById('codeInput').value = '';
+          setStatus('No code active');
+        })
+        .catch(e => { setStatus('Failed to clear'); setError(e.message); });
     }
 
     document.getElementById('codeInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') setCode();
     });
 
-    fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    // Load current state on open
+    fetch(BASE + '/latest', {
       headers: { 'X-Master-Key': API_KEY }
     })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) return r.text().then(t => { throw new Error('JSONBin error: ' + t); });
+      return r.json();
+    })
     .then(data => {
       const code = data.record.code;
-      document.getElementById('status').textContent = code ? 'Active: ' + code : 'No code active';
+      setStatus(code ? 'Active: ' + code : 'No code active');
+    })
+    .catch(e => {
+      setStatus('Could not connect to JSONBin');
+      setError(e.message);
     });
   </script>
 </body>
