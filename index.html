@@ -58,29 +58,24 @@
     <span class="code" id="displayCode"></span>
   </div>
   <script>
-    const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
-    const params = new URLSearchParams(window.location.search);
-    const API_KEY = params.get('key');
+    const DB = 'https://ckaleb-stream-default-rtdb.firebaseio.com/arenaCode.json';
 
     function fetchCode() {
-      if (!API_KEY) return;
-      fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
-        headers: { 'X-Master-Key': API_KEY }
-      })
-      .then(r => r.json())
-      .then(data => {
-        const code = data.record ? data.record.code : '';
-        const overlay = document.getElementById('overlay');
-        const el = document.getElementById('displayCode');
-        if (code) {
-          el.textContent = code;
-          overlay.classList.remove('hidden');
-        } else {
-          el.textContent = '';
-          overlay.classList.add('hidden');
-        }
-      })
-      .catch(() => {});
+      fetch(DB)
+        .then(r => r.json())
+        .then(data => {
+          const code = data || '';
+          const overlay = document.getElementById('overlay');
+          const el = document.getElementById('displayCode');
+          if (code) {
+            el.textContent = code;
+            overlay.classList.remove('hidden');
+          } else {
+            el.textContent = '';
+            overlay.classList.add('hidden');
+          }
+        })
+        .catch(() => {});
     }
 
     fetchCode();

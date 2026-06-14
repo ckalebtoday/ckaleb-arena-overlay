@@ -13,7 +13,7 @@
       justify-content: center;
       height: 100vh;
       font-family: 'Exo 2', sans-serif;
-      gap: 16px;
+      gap: 20px;
     }
     h1 {
       color: #a855f7;
@@ -23,28 +23,21 @@
       text-shadow: 0 0 10px #a855f7;
     }
     .row { display: flex; gap: 10px; align-items: center; }
-    label {
-      color: rgba(255,255,255,0.4);
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-align: center;
-    }
     input {
       background: rgba(255,255,255,0.08);
       border: 1px solid #a855f7;
       border-radius: 6px;
       color: #fff;
       font-family: 'Exo 2', sans-serif;
-      font-size: 16px;
+      font-size: 18px;
       padding: 10px 16px;
       outline: none;
-      letter-spacing: 2px;
+      width: 180px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
       text-align: center;
     }
-    #keyInput { width: 320px; font-size: 13px; letter-spacing: 1px; border-color: #4a4a8a; }
-    #codeInput { width: 180px; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; }
-    input::placeholder { color: rgba(255,255,255,0.2); }
+    input::placeholder { color: rgba(255,255,255,0.3); }
     button {
       background: linear-gradient(135deg, #7c3aed, #06b6d4);
       border: none;
@@ -58,84 +51,32 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    #connectBtn { background: linear-gradient(135deg, #4a4a8a, #7c3aed); font-size: 13px; padding: 8px 16px; }
     #clearBtn { background: rgba(255, 80, 120, 0.8); }
-    #codeSection { display: none; flex-direction: column; align-items: center; gap: 16px; }
     #status { color: rgba(255,255,255,0.5); font-size: 13px; letter-spacing: 1px; }
-    #error { color: #ff5078; font-size: 12px; letter-spacing: 1px; max-width: 400px; text-align: center; }
-    #obsUrl { color: #06b6d4; font-size: 11px; letter-spacing: 1px; max-width: 500px; text-align: center; word-break: break-all; cursor: pointer; text-decoration: underline; }
+    #error { color: #ff5078; font-size: 12px; letter-spacing: 1px; }
   </style>
 </head>
 <body>
   <h1>C.Kaleb Arena Control</h1>
-
-  <!-- Step 1: Enter API Key -->
-  <div id="keySection" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
-    <label>Enter your JSONBin Master Key</label>
-    <div class="row">
-      <input type="password" id="keyInput" placeholder="Paste your X-Master-Key here" />
-      <button id="connectBtn" onclick="connect()">Connect</button>
-    </div>
-    <p id="error"></p>
+  <div class="row">
+    <input type="text" id="codeInput" placeholder="Enter Code" maxlength="10" />
+    <button onclick="setCode()">Set</button>
+    <button id="clearBtn" onclick="clearCode()">Clear</button>
   </div>
-
-  <!-- Step 2: Control Panel (shown after key is validated) -->
-  <div id="codeSection">
-    <div class="row">
-      <input type="text" id="codeInput" placeholder="Enter Code" maxlength="10" />
-      <button onclick="setCode()">Set</button>
-      <button id="clearBtn" onclick="clearCode()">Clear</button>
-    </div>
-    <p id="status">No code active</p>
-    <label>Copy this URL into TikTok Live Studio browser source:</label>
-    <p id="obsUrl" onclick="copyUrl()"></p>
-    <p style="color:rgba(255,255,255,0.2); font-size:10px;">(click URL to copy)</p>
-  </div>
+  <p id="status">Loading...</p>
+  <p id="error"></p>
 
   <script>
-    const BIN_ID = '6a2ec420f5f4af5e29f09ff3';
-    const BASE = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
-    let API_KEY = '';
+    const DB = 'https://ckaleb-stream-default-rtdb.firebaseio.com/arenaCode.json';
 
-    function setError(msg) { document.getElementById('error').textContent = msg; }
     function setStatus(msg) { document.getElementById('status').textContent = msg; }
+    function setError(msg) { document.getElementById('error').textContent = msg; }
 
-    function connect() {
-      const key = document.getElementById('keyInput').value.trim();
-      if (!key) { setError('Please paste your Master Key'); return; }
-      setError('Connecting...');
-      fetch(BASE + '/latest', {
-        headers: { 'X-Master-Key': key }
-      })
-      .then(r => {
-        if (!r.ok) return r.text().then(t => { throw new Error(t); });
-        return r.json();
-      })
-      .then(data => {
-        API_KEY = key;
-        document.getElementById('keySection').style.display = 'none';
-        document.getElementById('codeSection').style.display = 'flex';
-        const code = data.record.code;
-        setStatus(code ? 'Active: ' + code : 'No code active');
-        const obsUrl = window.location.origin + window.location.pathname.replace('control.html', '') + 'index.html?key=' + encodeURIComponent(key);
-        document.getElementById('obsUrl').textContent = obsUrl;
-      })
-      .catch(e => setError('Could not connect: ' + e.message));
-    }
-
-    function copyUrl() {
-      const url = document.getElementById('obsUrl').textContent;
-      navigator.clipboard.writeText(url).then(() => {
-        document.getElementById('obsUrl').textContent = 'Copied!';
-        setTimeout(() => { document.getElementById('obsUrl').textContent = url; }, 2000);
-      });
-    }
-
-    function updateBin(code) {
-      return fetch(BASE, {
+    function writeCode(code) {
+      return fetch(DB, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-        body: JSON.stringify({ code: code })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(code)
       }).then(r => {
         if (!r.ok) return r.text().then(t => { throw new Error(t); });
         return r.json();
@@ -146,27 +87,27 @@
       const val = document.getElementById('codeInput').value.trim().toUpperCase();
       if (!val) return;
       setStatus('Saving...');
-      updateBin(val)
-        .then(() => setStatus('Active: ' + val))
-        .catch(e => setStatus('Error: ' + e.message));
+      writeCode(val)
+        .then(() => { setStatus('Active: ' + val); setError(''); })
+        .catch(e => { setStatus('Failed'); setError(e.message); });
     }
 
     function clearCode() {
       setStatus('Clearing...');
-      updateBin('')
-        .then(() => {
-          document.getElementById('codeInput').value = '';
-          setStatus('No code active');
-        })
-        .catch(e => setStatus('Error: ' + e.message));
+      writeCode('')
+        .then(() => { document.getElementById('codeInput').value = ''; setStatus('No code active'); setError(''); })
+        .catch(e => { setStatus('Failed'); setError(e.message); });
     }
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        if (document.getElementById('keySection').style.display !== 'none') connect();
-        else setCode();
-      }
+    document.getElementById('codeInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') setCode();
     });
+
+    // Load current state
+    fetch(DB)
+      .then(r => r.json())
+      .then(data => setStatus(data ? 'Active: ' + data : 'No code active'))
+      .catch(e => { setStatus('Could not connect'); setError(e.message); });
   </script>
 </body>
 </html>
